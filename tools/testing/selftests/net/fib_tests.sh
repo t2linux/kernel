@@ -457,38 +457,11 @@ fib_rp_filter_test()
 	ip -netns ns2 link set dev veth2 up
 
 	$IP link set dev lo address 52:54:00:6a:c7:5e
-	$IP link set dev veth1 address 52:54:00:6a:c7:5e
-	ip -netns ns2 link set dev lo address 52:54:00:6a:c7:5e
-	ip -netns ns2 link set dev veth2 address 52:54:00:6a:c7:5e
-
-	# 1. (ns2) redirect lo's egress to veth2's egress
-	ip netns exec ns2 tc qdisc add dev lo parent root handle 1: fq_codel
-	ip netns exec ns2 tc filter add dev lo parent 1: protocol arp basic \
-		action mirred egress redirect dev veth2
-	ip netns exec ns2 tc filter add dev lo parent 1: protocol ip basic \
-		action mirred egress redirect dev veth2
-
-	# 2. (ns1) redirect veth1's ingress to lo's ingress
-	$NS_EXEC tc qdisc add dev veth1 ingress
-	$NS_EXEC tc filter add dev veth1 ingress protocol arp basic \
-		action mirred ingress redirect dev lo
-	$NS_EXEC tc filter add dev veth1 ingress protocol ip basic \
-		action mirred ingress redirect dev lo
-
-	# 3. (ns1) redirect lo's egress to veth1's egress
-	$NS_EXEC tc qdisc add dev lo parent root handle 1: fq_codel
-	$NS_EXEC tc filter add dev lo parent 1: protocol arp basic \
-		action mirred egress redirect dev veth1
-	$NS_EXEC tc filter add dev lo parent 1: protocol ip basic \
-		action mirred egress redirect dev veth1
-
-	# 4. (ns2) redirect veth2's ingress to lo's ingress
-	ip netns exec ns2 tc qdisc add dev veth2 ingress
-	ip netns exec ns2 tc filter add dev veth2 ingress protocol arp basic \
-		action mirred ingress redirect dev lo
-	ip netns exec ns2 tc filter add dev veth2 ingress protocol ip basic \
-		action mirred ingress redirect dev lo
-
+	$IP link set dummy0 address 52:54:00:6a:c7:5e
+	$IP link add dummy1 type dummy
+	$IP link set dummy1 address 52:54:00:6a:c7:5e
+	$IP link set dev dummy1 up
+	$IP address add 192.0.2.1/24 dev dummy1
 	$NS_EXEC sysctl -qw net.ipv4.conf.all.rp_filter=1
 	$NS_EXEC sysctl -qw net.ipv4.conf.all.accept_local=1
 	$NS_EXEC sysctl -qw net.ipv4.conf.all.route_localnet=1
