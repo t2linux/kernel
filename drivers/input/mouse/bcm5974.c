@@ -86,6 +86,8 @@
 /* T2-Attached Devices */
 /* MacbookAir8,1 (2018) */
 #define USB_DEVICE_ID_APPLE_WELLSPRINGT2_J140K	0x027a
+/* MacbookPro15,2 (2018) */
+#define USB_DEVICE_ID_APPLE_WELLSPRINGT2_J132	0x027b
 
 #define BCM5974_DEVICE(prod) {					\
 	.match_flags = (USB_DEVICE_ID_MATCH_DEVICE |		\
@@ -153,6 +155,8 @@ static const struct usb_device_id bcm5974_table[] = {
 	BCM5974_DEVICE(USB_DEVICE_ID_APPLE_WELLSPRING9_JIS),
 	/* MacbookAir8,1 */
 	BCM5974_DEVICE(USB_DEVICE_ID_APPLE_WELLSPRINGT2_J140K),
+	/* MacbookPro15,2 */
+	BCM5974_DEVICE(USB_DEVICE_ID_APPLE_WELLSPRINGT2_J132),
 	/* Terminating entry */
 	{}
 };
@@ -491,6 +495,19 @@ static const struct bcm5974_config bcm5974_config_table[] = {
 	},
 	{
 		USB_DEVICE_ID_APPLE_WELLSPRINGT2_J140K,
+		0,
+		0,
+		HAS_INTEGRATED_BUTTON,
+		0, sizeof(struct bt_data),
+		0x83, DATAFORMAT(TYPE4),
+		{ SN_PRESSURE, 0, 300 },
+		{ SN_WIDTH, 0, 2048 },
+		{ SN_COORD, -6243, 6749 },
+		{ SN_COORD, -170, 7685 },
+		{ SN_ORIENT, -MAX_FINGER_ORIENTATION, MAX_FINGER_ORIENTATION }
+	},
+	{
+		USB_DEVICE_ID_APPLE_WELLSPRINGT2_J132,
 		0,
 		0,
 		HAS_INTEGRATED_BUTTON,
