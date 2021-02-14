@@ -94,6 +94,8 @@
 #define USB_DEVICE_ID_APPLE_WELLSPRINGT2_J213	0x027d
 /* MacbookPro16,2 (2020) */
 #define USB_DEVICE_ID_APPLE_WELLSPRINGT2_J214K	0x027e
+/* MacbookPro16,3 (2020) */
+#define USB_DEVICE_ID_APPLE_WELLSPRINGT2_J223	0x027f
 
 #define BCM5974_DEVICE(prod) {					\
 	.match_flags = (USB_DEVICE_ID_MATCH_DEVICE |		\
@@ -169,6 +171,8 @@ static const struct usb_device_id bcm5974_table[] = {
 	BCM5974_DEVICE(USB_DEVICE_ID_APPLE_WELLSPRINGT2_J213),
 	/* MacbookPro16,2 */
 	BCM5974_DEVICE(USB_DEVICE_ID_APPLE_WELLSPRINGT2_J214K),
+	/* MacbookPro16,3 */
+	BCM5974_DEVICE(USB_DEVICE_ID_APPLE_WELLSPRINGT2_J223),
 	/* Terminating entry */
 	{}
 };
@@ -559,6 +563,19 @@ static const struct bcm5974_config bcm5974_config_table[] = {
 	},
 	{
 		USB_DEVICE_ID_APPLE_WELLSPRINGT2_J214K,
+		0,
+		0,
+		HAS_INTEGRATED_BUTTON,
+		0, sizeof(struct bt_data),
+		0x83, DATAFORMAT(TYPE4),
+		{ SN_PRESSURE, 0, 300 },
+		{ SN_WIDTH, 0, 2048 },
+		{ SN_COORD, -6243, 6749 },
+		{ SN_COORD, -170, 7685 },
+		{ SN_ORIENT, -MAX_FINGER_ORIENTATION, MAX_FINGER_ORIENTATION }
+	},
+	{
+		USB_DEVICE_ID_APPLE_WELLSPRINGT2_J223,
 		0,
 		0,
 		HAS_INTEGRATED_BUTTON,
