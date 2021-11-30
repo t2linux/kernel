@@ -2486,7 +2486,6 @@ static void binder_transaction(struct binder_proc *proc,
 	struct lsmcontext lsmctx = { };
 	const void __user *user_buffer = (const void __user *)
 				(uintptr_t)tr->data.ptr.buffer;
-	struct lsmcontext scaff; /* scaffolding */
 
 	e = binder_transaction_log_add(&binder_transaction_log);
 	e->debug_id = t_debug_id;
