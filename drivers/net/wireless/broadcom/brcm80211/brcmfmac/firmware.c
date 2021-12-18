@@ -598,16 +598,16 @@ static const char **brcm_alt_fw_paths(const char *path, const char *board_type)
 {
 	char alt_path[BRCMF_FW_NAME_LEN];
 	char **alt_paths;
-	char suffix[5];
+	const char *suffix;
 
-	strscpy(alt_path, path, BRCMF_FW_NAME_LEN);
-	/* At least one character + suffix */
-	if (strlen(alt_path) < 5)
+	suffix = strrchr(path, '.');
+	if (!suffix || suffix == path)
 		return NULL;
 
-	/* strip .txt or .bin at the end */
-	strscpy(suffix, alt_path + strlen(alt_path) - 4, 5);
-	alt_path[strlen(alt_path) - 4] = 0;
+	/* strip extension at the end */
+	strscpy(alt_path, path, BRCMF_FW_NAME_LEN);
+	alt_path[suffix - path] = 0;
+
 	strlcat(alt_path, ".", BRCMF_FW_NAME_LEN);
 	strlcat(alt_path, board_type, BRCMF_FW_NAME_LEN);
 	strlcat(alt_path, suffix, BRCMF_FW_NAME_LEN);
@@ -638,7 +638,7 @@ static int brcmf_fw_request_firmware(const struct firmware **fw,
 	int ret, i;
 
 	/* Files can be board-specific, first try a board-specific path */
-	if (cur->type == BRCMF_FW_TYPE_NVRAM && fwctx->req->board_type) {
+	if (fwctx->req->board_type) {
 		const char **alt_paths = brcm_alt_fw_paths(cur->path, fwctx);
 		if (!alt_paths)
 			goto fallback;
