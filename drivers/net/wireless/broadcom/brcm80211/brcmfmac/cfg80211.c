@@ -4029,6 +4029,34 @@ exit:
 	return 0;
 }
 
+static s32
+brcmf_pmksa_v3_op(struct brcmf_if *ifp, struct cfg80211_pmksa *pmksa,
+		  bool alive)
+{
+	struct brcmf_pmk_op_v3_le pmk_op;
+	int length = offsetof(struct brcmf_pmk_op_v3_le, pmk);
+
+	memset(&pmk_op, 0, sizeof(pmk_op));
+	pmk_op.version = cpu_to_le16(BRCMF_PMKSA_VER_3);
+
+	if (!pmksa) {
+		/* Flush operation, operate on entire list */
+		pmk_op.count = cpu_to_le16(0);
+	} else {
+		/* Single PMK operation */
+		pmk_op.count = cpu_to_le16(1);
+		length += sizeof(struct brcmf_pmksa_v3);
+		memcpy(pmk_op.pmk[0].bssid, pmksa->bssid, ETH_ALEN);
+		memcpy(pmk_op.pmk[0].pmkid, pmksa->pmkid, WLAN_PMKID_LEN);
+		pmk_op.pmk[0].pmkid_len = WLAN_PMKID_LEN;
+		pmk_op.pmk[0].time_left = alive ? BRCMF_PMKSA_NO_EXPIRY : 0;
+	}
+
+	pmk_op.length = cpu_to_le16(length);
+
+	return brcmf_fil_iovar_data_set(ifp, "pmkid_info", &pmk_op, sizeof(pmk_op));
+}
+
 static __used s32
 brcmf_update_pmklist(struct brcmf_cfg80211_info *cfg, struct brcmf_if *ifp)
 {
@@ -4065,6 +4093,14 @@ brcmf_cfg80211_set_pmksa(struct wiphy *wiphy, struct net_device *ndev,
 	if (!check_vif_up(ifp->vif))
 		return -EIO;
 
+	brcmf_dbg(CONN, "set_pmksa - PMK bssid: %pM =\n", pmksa->bssid);
+	brcmf_dbg(CONN, "%*ph\n", WLAN_PMKID_LEN, pmksa->pmkid);
+
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PMKID_V3))
+		return brcmf_pmksa_v3_op(ifp, pmksa, true);
+
+	/* TODO: implement PMKID_V2 */
+
 	npmk = le32_to_cpu(cfg->pmk_list.npmk);
 	for (i = 0; i < npmk; i++)
 		if (!memcmp(pmksa->bssid, pmk[i].bssid, ETH_ALEN))
@@ -4080,9 +4116,6 @@ brcmf_cfg80211_set_pmksa(struct wiphy *wiphy, struct net_device *ndev,
 		bphy_err(drvr, "Too many PMKSA entries cached %d\n", npmk);
 		return -EINVAL;
 	}
-
-	brcmf_dbg(CONN, "set_pmksa - PMK bssid: %pM =\n", pmk[npmk].bssid);
-	brcmf_dbg(CONN, "%*ph\n", WLAN_PMKID_LEN, pmk[npmk].pmkid);
 
 	err = brcmf_update_pmklist(cfg, ifp);
 
@@ -4106,6 +4139,11 @@ brcmf_cfg80211_del_pmksa(struct wiphy *wiphy, struct net_device *ndev,
 		return -EIO;
 
 	brcmf_dbg(CONN, "del_pmksa - PMK bssid = %pM\n", pmksa->bssid);
+
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PMKID_V3))
+		return brcmf_pmksa_v3_op(ifp, pmksa, false);
+
+	/* TODO: implement PMKID_V2 */
 
 	npmk = le32_to_cpu(cfg->pmk_list.npmk);
 	for (i = 0; i < npmk; i++)
@@ -4142,6 +4180,11 @@ brcmf_cfg80211_flush_pmksa(struct wiphy *wiphy, struct net_device *ndev)
 	brcmf_dbg(TRACE, "Enter\n");
 	if (!check_vif_up(ifp->vif))
 		return -EIO;
+
+	if (brcmf_feat_is_enabled(ifp, BRCMF_FEAT_PMKID_V3))
+		return brcmf_pmksa_v3_op(ifp, NULL, false);
+
+	/* TODO: implement PMKID_V2 */
 
 	memset(&cfg->pmk_list, 0, sizeof(cfg->pmk_list));
 	err = brcmf_update_pmklist(cfg, ifp);
