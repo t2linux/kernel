@@ -594,26 +594,41 @@ static int brcmf_fw_complete_request(const struct firmware *fw,
 	return (cur->flags & BRCMF_FW_REQF_OPTIONAL) ? 0 : ret;
 }
 
-static const char **brcm_alt_fw_paths(const char *path, const char *board_type)
+static const char **brcm_alt_fw_paths(const char *path, struct brcmf_fw *fwctx)
 {
+	const char **board_types = fwctx->req->board_types;
+	int board_type_count = 0;
+	int i;
 	char alt_path[BRCMF_FW_NAME_LEN];
 	char **alt_paths;
 	const char *suffix;
+
+	if (!board_types || !board_types[0])
+		return NULL;
+
+	while (*board_types++)
+		board_type_count++;
 
 	suffix = strrchr(path, '.');
 	if (!suffix || suffix == path)
 		return NULL;
 
-	/* strip extension at the end */
-	strscpy(alt_path, path, BRCMF_FW_NAME_LEN);
-	alt_path[suffix - path] = 0;
+	alt_paths = kzalloc(sizeof(char *) * (board_type_count + 1),
+			    GFP_KERNEL);
 
-	strlcat(alt_path, ".", BRCMF_FW_NAME_LEN);
-	strlcat(alt_path, board_type, BRCMF_FW_NAME_LEN);
-	strlcat(alt_path, suffix, BRCMF_FW_NAME_LEN);
+	board_types = fwctx->req->board_types;
+	for (i = 0; i < board_type_count; i++) {
+		/* strip extension at the end */
+		strscpy(alt_path, path, BRCMF_FW_NAME_LEN);
+		alt_path[suffix - path] = 0;
 
-	alt_paths = kzalloc(sizeof(char *) * 2, GFP_KERNEL);
-	alt_paths[0] = kstrdup(alt_path, GFP_KERNEL);
+		strlcat(alt_path, ".", BRCMF_FW_NAME_LEN);
+		strlcat(alt_path, board_types[i], BRCMF_FW_NAME_LEN);
+		strlcat(alt_path, suffix, BRCMF_FW_NAME_LEN);
+
+		alt_paths[i] = kstrdup(alt_path, GFP_KERNEL);
+		brcmf_dbg(TRACE, "FW alt path: %s\n", alt_paths[i]);
+	}
 
 	return (const char **)alt_paths;
 }
@@ -638,7 +653,7 @@ static int brcmf_fw_request_firmware(const struct firmware **fw,
 	int ret, i;
 
 	/* Files can be board-specific, first try a board-specific path */
-	if (fwctx->req->board_type) {
+	if (fwctx->req->board_types) {
 		const char **alt_paths = brcm_alt_fw_paths(cur->path, fwctx);
 		if (!alt_paths)
 			goto fallback;
@@ -748,7 +763,7 @@ int brcmf_fw_get_firmwares(struct device *dev, struct brcmf_fw_request *req,
 	fwctx->done = fw_cb;
 
 	/* First try alternative board-specific path if any */
-	if (fwctx->req->board_type)
+	if (fwctx->req->board_types)
 		fwctx->alt_paths = brcm_alt_fw_paths(first->path, fwctx);
 
 	if (fwctx->alt_paths) {
