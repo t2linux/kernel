@@ -2096,11 +2096,69 @@ brcmf_pcie_prepare_fw_request(struct brcmf_pciedev_info *devinfo)
 	fwreq->domain_nr = pci_domain_nr(devinfo->pdev->bus) + 1;
 	fwreq->bus_nr = devinfo->pdev->bus->number;
 
-	brcmf_dbg(PCIE, "Board: %s\n", devinfo->settings->board_type);
-	fwreq->board_types = devm_kzalloc(&devinfo->pdev->dev,
-					  sizeof(const char *) * 2,
-					  GFP_KERNEL);
-	fwreq->board_types[0] = devinfo->settings->board_type;
+	/* Apple platforms with fancy firmware/NVRAM selection */
+	if (devinfo->settings->board_type &&
+	    devinfo->settings->antenna_sku &&
+	    devinfo->otp.valid) {
+		char *buf;
+		int len;
+
+		brcmf_dbg(PCIE, "Apple board: %s\n",
+			  devinfo->settings->board_type);
+
+		/* Example: apple,shikoku-RASP-m-6.11-X3 */
+		len = (strlen(devinfo->settings->board_type) + 1 +
+		       strlen(devinfo->otp.module) + 1 +
+		       strlen(devinfo->otp.vendor) + 1 +
+		       strlen(devinfo->otp.version) + 1 +
+		       strlen(devinfo->settings->antenna_sku) + 1);
+
+		fwreq->board_types = devm_kzalloc(&devinfo->pdev->dev,
+						  sizeof(const char *) * 7,
+						  GFP_KERNEL);
+
+		/* apple,shikoku */
+		fwreq->board_types[5] = devinfo->settings->board_type;
+
+		buf = devm_kzalloc(&devinfo->pdev->dev, len, GFP_KERNEL);
+
+		strlcpy(buf, devinfo->settings->board_type, len);
+		strlcat(buf, "-", len);
+		strlcat(buf, devinfo->settings->antenna_sku, len);
+		/* apple,shikoku-X3 */
+		fwreq->board_types[4] = devm_kstrdup(&devinfo->pdev->dev, buf,
+						     GFP_KERNEL);
+
+		strlcpy(buf, devinfo->settings->board_type, len);
+		strlcat(buf, "-", len);
+		strlcat(buf, devinfo->otp.module, len);
+		/* apple,shikoku-RASP */
+		fwreq->board_types[3] = devm_kstrdup(&devinfo->pdev->dev, buf,
+						     GFP_KERNEL);
+
+		strlcat(buf, "-", len);
+		strlcat(buf, devinfo->otp.vendor, len);
+		/* apple,shikoku-RASP-m */
+		fwreq->board_types[2] = devm_kstrdup(&devinfo->pdev->dev, buf,
+						     GFP_KERNEL);
+
+		strlcat(buf, "-", len);
+		strlcat(buf, devinfo->otp.version, len);
+		/* apple,shikoku-RASP-m-6.11 */
+		fwreq->board_types[1] = devm_kstrdup(&devinfo->pdev->dev, buf,
+						     GFP_KERNEL);
+
+		strlcat(buf, "-", len);
+		strlcat(buf, devinfo->settings->antenna_sku, len);
+		/* apple,shikoku-RASP-m-6.11-X3 */
+		fwreq->board_types[0] = buf;
+	} else {
+		brcmf_dbg(PCIE, "Board: %s\n", devinfo->settings->board_type);
+		fwreq->board_types = devm_kzalloc(&devinfo->pdev->dev,
+						  sizeof(const char *) * 2,
+						  GFP_KERNEL);
+		fwreq->board_types[0] = devinfo->settings->board_type;
+	}
 
 	return fwreq;
 }
