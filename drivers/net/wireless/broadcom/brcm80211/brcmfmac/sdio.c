@@ -4432,7 +4432,9 @@ brcmf_sdio_prepare_fw_request(struct brcmf_sdio *bus)
 	fwreq->items[BRCMF_SDIO_FW_NVRAM].type = BRCMF_FW_TYPE_NVRAM;
 	fwreq->items[BRCMF_SDIO_FW_CLM].type = BRCMF_FW_TYPE_BINARY;
 	fwreq->items[BRCMF_SDIO_FW_CLM].flags = BRCMF_FW_REQF_OPTIONAL;
-	fwreq->board_type = bus->sdiodev->settings->board_type;
+	fwreq->board_types = devm_kzalloc(bus->sdiodev->dev,
+					  sizeof(const char *) * 2, GFP_KERNEL);
+	fwreq->board_types[0] = bus->sdiodev->settings->board_type;
 
 	return fwreq;
 }
