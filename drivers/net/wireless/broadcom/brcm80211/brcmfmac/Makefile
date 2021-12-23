@@ -47,3 +47,5 @@ brcmfmac-$(CONFIG_OF) += \
 		of.o
 brcmfmac-$(CONFIG_DMI) += \
 		dmi.o
+brcmfmac-$(CONFIG_ACPI) += \
+		acpi.o
