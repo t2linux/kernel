@@ -3433,7 +3433,7 @@ static void btusb_generate_qca_nvm_name(char *fwname, size_t max_size,
 		/* The board_id should be split into two bytes
 		 * The 1st byte is chip ID, and the 2nd byte is platform ID
 		 * For example, board ID 0x010A, 0x01 is platform ID. 0x0A is chip ID
-		 * Currently we have several platforms, and platform IDs are continuously added.
+		 * we have several platforms, and platform IDs are continuously added
 		 * Platform ID:
 		 * 0x00 is for Mobile
 		 * 0x01 is for X86
