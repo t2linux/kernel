@@ -86,6 +86,15 @@ void brcmf_of_probe(struct device *dev, enum brcmf_bus_type bus_type,
 	if (!of_property_read_string(np, "apple,antenna-sku", &prop))
 		settings->antenna_sku = devm_kstrdup(dev, prop, GFP_KERNEL);
 
+	/*
+	 * The WLAN calibration blob is normally stored in SROM, but Apple
+	 * ARM64 platforms pass it via the DT instead.
+	 */
+	prop = of_get_property(np, "brcm,cal-blob", &settings->cal_size);
+	if (prop && settings->cal_size)
+		settings->cal_blob = devm_kmemdup(dev, prop, settings->cal_size,
+						  GFP_KERNEL);
+
 	/* Set board-type to the first string of the machine compatible prop */
 	root = of_find_node_by_path("/");
 	if (root && !settings->board_type) {
