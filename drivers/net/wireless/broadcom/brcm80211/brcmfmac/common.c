@@ -218,6 +218,23 @@ static int brcmf_c_process_txcap_blob(struct brcmf_if *ifp)
 	return err;
 }
 
+static int brcmf_c_process_cal_blob(struct brcmf_if *ifp)
+{
+	struct brcmf_pub *drvr = ifp->drvr;
+	struct brcmf_mp_device *settings = drvr->settings;
+	s32 err;
+
+	brcmf_dbg(TRACE, "Enter\n");
+
+	if (!settings->cal_blob || !settings->cal_size)
+		return 0;
+
+	brcmf_info("Calibration blob provided by platform, loading\n");
+	err = brcmf_c_download_blob(ifp, settings->cal_blob, settings->cal_size,
+				    "calload", "calload_status");
+	return err;
+}
+
 int brcmf_c_preinit_dcmds(struct brcmf_if *ifp)
 {
 	struct brcmf_pub *drvr = ifp->drvr;
@@ -288,6 +305,13 @@ int brcmf_c_preinit_dcmds(struct brcmf_if *ifp)
 	err = brcmf_c_process_txcap_blob(ifp);
 	if (err < 0) {
 		bphy_err(drvr, "download TxCap blob file failed, %d\n", err);
+		goto done;
+	}
+
+	/* Download external calibration blob, if available */
+	err = brcmf_c_process_cal_blob(ifp);
+	if (err < 0) {
+		bphy_err(drvr, "download calibration blob file failed, %d\n", err);
 		goto done;
 	}
 
