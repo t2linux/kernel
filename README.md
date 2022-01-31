@@ -10,4 +10,7 @@ For instructions on installing the downstream distributions and further informat
 | Distribution | Kernel Version | Branch | Maintainer |
 |:------------:|:--------------:|:------:|:----------:|
 | Generic | 5.16.x | linux-5.16.y-t2 | @aunali1 |
+| Generic (LTS) | 5.15.x | linux-5.15.y-t2 | @aunali1 |
 | Arch Linux | 5.16.x | linux-5.16.y-t2-arch | @aunali1 |
+| Arch Linux (LTS) | 5.15.x | linux-5.15.y-t2-arch | @aunali1 |
+
