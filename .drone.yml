@@ -28,4 +28,4 @@ steps:
     - sudo -u builduser bash -c 'echo -e "CONFIG_MOUSE_BCM5974=y\n" >> .config'
     - sudo -u builduser bash -c 'echo -e "CONFIG_MEDIA_SUPPORT=y\nCONFIG_MEDIA_USB_SUPPORT=y\nCONFIG_MEDIA_CAMERA_SUPPORT=y\nCONFIG_USB_VIDEO_CLASS=y\n" >> .config'
     - sudo -u builduser bash -c 'yes "" | make oldconfig'
-    - sudo -u builduser bash -c 'make -j16'
+    - sudo -u builduser bash -c 'make all -j$(nproc)'
