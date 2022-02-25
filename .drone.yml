@@ -1,0 +1,22 @@
+kind: pipeline
+name: t2-kernel-compiletest
+
+steps:
+- name: compile
+  image: archlinux
+  pull: always
+  commands:
+    - pacman --noconfirm -Syu
+    - pacman --noconfirm --needed -S base-devel sudo bc kmod libelf pahole cpio perl tar xz git
+    - useradd builduser -m
+    - passwd -d builduser
+    - printf 'builduser ALL=(ALL) ALL\n' | tee -a /etc/sudoers # passwordless sudo
+    - chown -R builduser:builduser ./
+    - sudo -u builduser bash -c 'make defconfig'
+    - sudo -u builduser bash -c 'echo -e "CONFIG_BRCMUTIL=y\nCONFIG_BRCMFMAC=y\nCONFIG_BRCMFMAC_PCIE=y\nCONFIG_BRCMDBG=y\n" >> .config'
+    - sudo -u builduser bash -c 'echo -e "CONFIG_DRM_AMDGPU=y\n" >> .config'
+    - sudo -u builduser bash -c 'echo -e "CONFIG_SENSORS_APPLESMC=y\n" >> .config'
+    - sudo -u builduser bash -c 'echo -e "CONFIG_MOUSE_BCM5974=y\n" >> .config'
+    - sudo -u builduser bash -c 'echo -e "CONFIG_MEDIA_SUPPORT=y\nCONFIG_MEDIA_USB_SUPPORT=y\nCONFIG_MEDIA_CAMERA_SUPPORT=y\nCONFIG_USB_VIDEO_CLASS=y\n" >> .config'
+    - sudo -u builduser bash -c 'yes "" | make oldconfig'
+    - sudo -u builduser bash -c 'make -j16'
