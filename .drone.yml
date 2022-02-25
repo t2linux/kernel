@@ -12,9 +12,9 @@ steps:
     - curl --output /tmp/pacman-static https://pkgbuild.com/~morganamilo/pacman-static/x86_64/bin/pacman-static # Workaround https://bugs.archlinux.org/task/69563
     - chmod +x /tmp/pacman-static
     - /tmp/pacman-static --noconfirm -Syy
-    - curl --output /tmp/glibc-linux4-2.35-2-x86_64.pkg.tar.zst  https://dl.t2linux.org/ci/glibc-linux4-2.35-2-x86_64.pkg.tar.zst 
-    - curl --output /tmp/lib32-glibc-linux4-2.35-2-x86_64.pkg.tar.zst https://dl.t2linux.org/ci/lib32-glibc-linux4-2.35-2-x86_64.pkg.tar.zst
-    - printf 'y\ny\n' | /tmp/pacman-static -U /tmp/glibc-linux4-2.35-2-x86_64.pkg.tar.zst /tmp/lib32-glibc-linux4-2.35-2-x86_64.pkg.tar.zst
+    - curl --output /tmp/glibc-linux4-2.35-3-x86_64.pkg.tar.zst  https://dl.t2linux.org/ci/glibc-linux4-2.35-3-x86_64.pkg.tar.zst
+    - curl --output /tmp/lib32-glibc-linux4-2.35-3-x86_64.pkg.tar.zst https://dl.t2linux.org/ci/lib32-glibc-linux4-2.35-3-x86_64.pkg.tar.zst
+    - printf 'y\ny\n' | /tmp/pacman-static -U /tmp/glibc-linux4-2.35-3-x86_64.pkg.tar.zst /tmp/lib32-glibc-linux4-2.35-3-x86_64.pkg.tar.zst
     - pacman --noconfirm -Syu
     - pacman --noconfirm --needed -S base-devel sudo bc kmod libelf pahole cpio perl tar xz git
     - useradd builduser -m
