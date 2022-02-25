@@ -1,6 +1,9 @@
 kind: pipeline
 name: t2-kernel-compiletest
 
+clone:
+  depth: 1
+
 steps:
 - name: compile
   image: archlinux
