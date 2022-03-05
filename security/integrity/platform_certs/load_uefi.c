@@ -3,6 +3,7 @@
 #include <linux/kernel.h>
 #include <linux/sched.h>
 #include <linux/cred.h>
+#include <linux/dmi.h>
 #include <linux/err.h>
 #include <linux/efi.h>
 #include <linux/slab.h>
@@ -10,6 +11,32 @@
 #include <keys/system_keyring.h>
 #include "../integrity.h"
 #include "keyring_handler.h"
+
+/* Apple Macs with T2 Security chip don't support these UEFI variables.
+ * The T2 chip manages the Secure Boot and does not allow Linux to boot
+ * if it is turned on. If turned off, an attempt to get certificates
+ * causes a crash, so we simply return 0 for them in each function.
+ */
+
+static const struct dmi_system_id uefi_skip_cert[] = {
+
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookPro15,1") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookPro15,2") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookPro15,3") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookPro15,4") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookPro16,1") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookPro16,2") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookPro16,3") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookPro16,4") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookAir8,1") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookAir8,2") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacBookAir9,1") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacMini8,1") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "MacPro7,1") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "iMac20,1") },
+	{ UEFI_QUIRK_SKIP_CERT("Apple Inc.", "iMac20,2") },
+	{ }
+};
 
 /*
  * Look to see if a UEFI variable called MokIgnoreDB exists and return true if
@@ -20,12 +47,18 @@
  * is set, we should ignore the db variable also and the true return indicates
  * this.
  */
+
 static __init bool uefi_check_ignore_db(void)
 {
 	efi_status_t status;
 	unsigned int db = 0;
 	unsigned long size = sizeof(db);
 	efi_guid_t guid = EFI_SHIM_LOCK_GUID;
+	const struct dmi_system_id *dmi_id;
+
+	dmi_id = dmi_first_match(uefi_skip_cert);
+	if (dmi_id)
+		return 0;
 
 	status = efi.get_variable(L"MokIgnoreDB", &guid, NULL, &size, &db);
 	return status == EFI_SUCCESS;
@@ -40,6 +73,11 @@ static __init void *get_cert_list(efi_char16_t *name, efi_guid_t *guid,
 	unsigned long lsize = 4;
 	unsigned long tmpdb[4];
 	void *db;
+	const struct dmi_system_id *dmi_id;
+
+	dmi_id = dmi_first_match(uefi_skip_cert);
+	if (dmi_id)
+		return 0;
 
 	*status = efi.get_variable(name, guid, NULL, &lsize, &tmpdb);
 	if (*status == EFI_NOT_FOUND)
@@ -84,6 +122,11 @@ static int __init load_moklist_certs(void)
 	unsigned long moksize;
 	efi_status_t status;
 	int rc;
+	const struct dmi_system_id *dmi_id;
+
+	dmi_id = dmi_first_match(uefi_skip_cert);
+	if (dmi_id)
+		return 0;
 
 	/* First try to load certs from the EFI MOKvar config table.
 	 * It's not an error if the MOKvar config table doesn't exist
@@ -137,6 +180,11 @@ static int __init load_uefi_certs(void)
 	unsigned long dbsize = 0, dbxsize = 0, mokxsize = 0;
 	efi_status_t status;
 	int rc = 0;
+	const struct dmi_system_id *dmi_id;
+
+	dmi_id = dmi_first_match(uefi_skip_cert);
+	if (dmi_id)
+		return 0;
 
 	if (!efi_rt_services_supported(EFI_RT_SUPPORTED_GET_VARIABLE))
 		return false;
